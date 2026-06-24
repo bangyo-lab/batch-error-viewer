@@ -1,0 +1,56 @@
+[
+  {
+    "groupId": "SDF770",
+    "runId": "SDFPD771",
+    "seqId": "seq_sfpdmg502",
+    "jobName": "FW1차_오늘농사_수출입실적날씨월통계(16일)",
+    "jobId": "JOB001",
+    "targetTable": "TB_EXP",
+    "targetTableName": "수출입"
+  },
+  {
+    "groupId": "SDF770",
+    "runId": "SDFPD772",
+    "seqId": "seq_sfpdmg503",
+    "jobName": "수출입_일일_통계",
+    "jobId": "JOB002",
+    "targetTable": "TB_STAT",
+    "targetTableName": "통계"
+  },
+  {
+    "groupId": "SDF771",
+    "runId": "SDFPD780",
+    "seqId": "seq_sfpdmg510",
+    "jobName": "일일_판매량_집계",
+    "jobId": "JOB003",
+    "targetTable": "TB_SALES",
+    "targetTableName": "판매"
+  },
+  {
+    "groupId": "SDF771",
+    "runId": "SDFPD781",
+    "seqId": "seq_sfpdmg511",
+    "jobName": "고객정보_동기화",
+    "jobId": "JOB004",
+    "targetTable": "TB_CUST",
+    "targetTableName": "고객"
+  },
+  {
+    "groupId": "SDF772",
+    "runId": "SDFPD790",
+    "seqId": "seq_sfpdmg520",
+    "jobName": "재고_현황_조회",
+    "jobId": "JOB005",
+    "targetTable": "TB_INV",
+    "targetTableName": "재고"
+  },
+  {
+    "groupId": "SDF773",
+    "runId": "SDFPD800",
+    "seqId": "seq_sfpdmg530",
+    "jobName": "결제_내역_집계",
+    "jobId": "JOB006",
+    "targetTable": "TB_PAY",
+    "targetTableName": "결제"
+  }
+]

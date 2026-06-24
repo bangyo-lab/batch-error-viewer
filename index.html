@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>배치 오류 정보 조회</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <!-- 데이터 로드 모달 -->
+    <div id="loadModal" class="modal hidden">
+      <div class="modal-content">
+        <h3>배치 정보 데이터 로드</h3>
+        <p id="modalSubtitle">엑셀 파일을 업로드하거나 data.json을 사용합니다.</p>
+
+        <div class="modal-section">
+          <label for="excelFile">엑셀 파일 선택:</label>
+          <input type="file" id="excelFile" accept=".xlsx,.xls,.csv" />
+          <button id="uploadExcelBtn" class="btn btn-primary">업로드</button>
+        </div>
+
+        <div class="modal-divider">또는</div>
+
+        <button id="useDefaultBtn" class="btn btn-secondary">기본 data.json 사용</button>
+      </div>
+    </div>
+
+    <!-- 데이터 상태 표시 -->
+    <div id="dataStatus" class="data-status">
+      <span id="dataStatusText"></span>
+      <div class="status-buttons">
+        <button id="exportDataBtn" class="btn-action">📥 내보내기</button>
+        <button id="resetDataBtn" class="btn-action">🔄 재설정</button>
+      </div>
+    </div>
+
+    <!-- 좌측: SMS 입력 & 파싱 -->
+    <div class="left-panel">
+      <h2>SMS 오류 메시지 파싱</h2>
+
+      <div class="section">
+        <label for="smsInput">SMS 오류 메시지</label>
+        <textarea
+          id="smsInput"
+          class="sms-input"
+          placeholder="[배치자동화]작업에러[YYMMDD][HH:MM][GROUP_ID][RUN_ID][job명]..."
+        ></textarea>
+      </div>
+
+      <div class="button-group">
+        <button id="parseBtn" class="btn btn-primary" disabled>[파싱]</button>
+        <button id="resetBtn" class="btn btn-secondary">[초기화]</button>
+      </div>
+
+      <!-- 파싱 결과 -->
+      <div class="section">
+        <label>파싱 결과 (읽기 전용)</label>
+        <div id="parseResult" class="parse-result">
+          <div class="result-field">
+            <span class="label">GROUP ID:</span>
+            <span id="groupIdResult" class="value">-</span>
+          </div>
+          <div class="result-field">
+            <span class="label">RUN ID:</span>
+            <span id="runIdResult" class="value">-</span>
+          </div>
+          <div class="result-field">
+            <span class="label">SEQ ID:</span>
+            <span id="seqIdResult" class="value">-</span>
+          </div>
+          <div class="result-field">
+            <span class="label">job명:</span>
+            <span id="jobNameResult" class="value">-</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 에러 메시지 -->
+      <div id="parseError" class="error-message" style="display: none;"></div>
+    </div>
+
+    <!-- 우측: 검색 & 결과 -->
+    <div class="right-panel">
+      <h2>배치 정보 검색</h2>
+
+      <div class="section">
+        <button id="searchBtn" class="btn btn-primary" disabled>[검색]</button>
+      </div>
+
+      <!-- 검색 결과 테이블 -->
+      <div class="section">
+        <label>검색 결과</label>
+        <div class="table-wrapper">
+          <table id="resultTable" class="result-table">
+            <thead>
+              <tr>
+                <th>GROUP_ID</th>
+                <th>RUN_ID</th>
+                <th>SEQ_ID</th>
+                <th>job명</th>
+                <th>JOB_ID</th>
+                <th>타겟테이블</th>
+                <th>타겟테이블명</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="empty-row">
+                <td colspan="7">검색 결과가 없습니다.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 에러 메시지 -->
+      <div id="searchError" class="error-message" style="display: none;"></div>
+    </div>
+  </div>
+
+  <!-- Dexie.js 라이브러리 -->
+  <script src="https://cdn.jsdelivr.net/npm/dexie@3/dist/dexie.min.js"></script>
+  <!-- SheetJS 라이브러리 (엑셀 파일 읽기) -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18/dist/xlsx.full.min.js"></script>
+  <!-- 앱 로직 -->
+  <script src="app.js"></script>
+</body>
+</html>

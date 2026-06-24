@@ -1,0 +1,7 @@
+GROUP_ID,RUN_ID,SEQ_ID,job명,JOB_ID,타겟테이블,타겟테이블명
+SDF770,SDFPD771,seq_sfpdmg502,FW1차_오늘농사_수출입실적날씨월통계(16일),JOB001,TB_EXP,수출입
+SDF770,SDFPD772,seq_sfpdmg503,수출입_일일_통계,JOB002,TB_STAT,통계
+SDF771,SDFPD780,seq_sfpdmg510,일일_판매량_집계,JOB003,TB_SALES,판매
+SDF771,SDFPD781,seq_sfpdmg511,고객정보_동기화,JOB004,TB_CUST,고객
+SDF772,SDFPD790,seq_sfpdmg520,재고_현황_조회,JOB005,TB_INV,재고
+SDF773,SDFPD800,seq_sfpdmg530,결제_내역_집계,JOB006,TB_PAY,결제
