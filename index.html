@@ -1,154 +1,724 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>배치 오류 정보 조회</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>배치 오류 조회</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; }
+    body {
+      background: #F8FAFC;
+      font-family: 'Malgun Gothic', 'Segoe UI', system-ui, sans-serif;
+      color: #0F172A;
+      -webkit-font-smoothing: antialiased;
+    }
+    a {
+      color: #2563EB;
+      text-decoration: none;
+    }
+    a:hover {
+      color: #1D4ED8;
+      text-decoration: underline;
+    }
+    button:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+    textarea::placeholder {
+      color: #94A3B8;
+    }
+    textarea:focus {
+      outline: none;
+      border-color: #EA580C;
+      box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.12);
+    }
+    @keyframes rowPop {
+      0% { opacity: 0; transform: translateY(-10px); }
+      100% { opacity: 1; transform: none; }
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    @keyframes shimmer {
+      0% { background-position: -420px 0; }
+      100% { background-position: 420px 0; }
+    }
+    .container {
+      min-height: 100vh;
+      padding: 32px 40px 56px;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 28px;
+      max-width: 1440px;
+    }
+    .header-icon {
+      width: 46px;
+      height: 46px;
+      border-radius: 14px;
+      background: #EA580C;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 26px;
+      font-weight: 800;
+      line-height: 1;
+    }
+    .header-content {
+      flex: 1;
+    }
+    .header-title {
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+    .header-desc {
+      font-size: 13px;
+      color: #64748B;
+      margin-top: 3px;
+    }
+    .header-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      border: 1px solid #E2E8F0;
+      border-radius: 999px;
+      background: #fff;
+      font-size: 12px;
+      color: #64748B;
+      font-weight: 600;
+    }
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #16A34A;
+      display: inline-block;
+    }
+    .main {
+      display: grid;
+      grid-template-columns: 380px 100px minmax(560px, 1fr);
+      gap: 24px;
+      align-items: start;
+      max-width: 1440px;
+    }
+    .section {
+      background: #fff;
+      border: 1px solid #E2E8F0;
+      border-radius: 16px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .section-title {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 700;
+    }
+    .section-hint {
+      font-size: 12px;
+      color: #94A3B8;
+    }
+    textarea {
+      height: 300px;
+      resize: vertical;
+      border: 1px solid #E2E8F0;
+      border-radius: 12px;
+      padding: 16px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 12.5px;
+      line-height: 1.6;
+      background: #F8FAFC;
+      color: #0F172A;
+      width: 100%;
+    }
+    .extracted-info {
+      border: 1px dashed #FED7AA;
+      background: #FFF7ED;
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 11px;
+    }
+    .extracted-label {
+      font-size: 11px;
+      font-weight: 800;
+      color: #EA580C;
+      letter-spacing: 0.06em;
+    }
+    .extracted-item {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 13px;
+    }
+    .extracted-key {
+      color: #64748B;
+      flex: none;
+    }
+    .extracted-value {
+      font-weight: 600;
+      font-family: ui-monospace, Menlo, monospace;
+      text-align: right;
+      word-break: break-all;
+    }
+    .button-column {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      align-items: center;
+      padding-top: 60px;
+    }
+    button {
+      font-family: inherit;
+      cursor: pointer;
+      border-radius: 12px;
+      font-weight: 700;
+      transition: background-color 0.2s;
+    }
+    .btn-parse {
+      width: 100%;
+      padding: 14px 6px;
+      border: 1.5px solid #EA580C;
+      background: #fff;
+      color: #EA580C;
+      font-size: 13px;
+    }
+    .btn-parse:hover:not(:disabled) {
+      background: #FFF7ED;
+    }
+    .btn-search {
+      width: 100%;
+      padding: 20px 6px;
+      border: none;
+      background: #EA580C;
+      color: #fff;
+      border-radius: 14px;
+      font-size: 15px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 6px 16px rgba(234, 88, 12, 0.28);
+    }
+    .btn-search:hover:not(:disabled) {
+      background: #C2410C;
+    }
+    .btn-reset {
+      width: 100%;
+      padding: 12px 6px;
+      border: 1px solid #E2E8F0;
+      background: #fff;
+      color: #64748B;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .btn-reset:hover {
+      background: #F8FAFC;
+    }
+    .divider {
+      color: #CBD5E1;
+      font-size: 15px;
+      font-weight: 800;
+      line-height: 1;
+    }
+    .spinner {
+      width: 14px;
+      height: 14px;
+      border: 2px solid rgba(255, 255, 255, 0.4);
+      border-top-color: #fff;
+      border-radius: 50%;
+      display: inline-block;
+      animation: spin 0.6s linear infinite;
+    }
+    .results-section {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      min-width: 0;
+    }
+    .results-container {
+      background: #fff;
+      border: 1px solid #E2E8F0;
+      border-radius: 16px;
+      overflow: hidden;
+    }
+    .results-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 20px;
+    }
+    .results-count {
+      font-size: 12px;
+      font-weight: 700;
+      color: #64748B;
+      background: #F1F5F9;
+      padding: 4px 12px;
+      border-radius: 999px;
+    }
+    .results-columns {
+      display: grid;
+      grid-template-columns: 120px 140px 150px 150px 120px;
+      gap: 16px;
+      padding: 13px 20px;
+      background: #F8FAFC;
+      border-top: 1px solid #E2E8F0;
+      border-bottom: 1px solid #E2E8F0;
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #64748B;
+      letter-spacing: 0.03em;
+    }
+    .results-body {
+      min-height: 60px;
+    }
+    .result-row {
+      display: grid;
+      grid-template-columns: 120px 140px 150px 150px 120px;
+      gap: 16px;
+      padding: 16px 20px;
+      border-bottom: 1px solid #F1F5F9;
+      align-items: center;
+      border-left: 3px solid transparent;
+      background: #fff;
+    }
+    .result-row.first {
+      border-left-color: #EA580C;
+      background: #FFF7ED;
+      animation: rowPop 0.4s ease-out;
+    }
+    .result-job-id {
+      font-family: ui-monospace, Menlo, monospace;
+      font-weight: 700;
+      color: #EA580C;
+      font-size: 13px;
+    }
+    .result-job-name {
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    .result-table {
+      font-family: ui-monospace, Menlo, monospace;
+      font-size: 12.5px;
+      color: #2563EB;
+      word-break: break-all;
+    }
+    .result-seq {
+      font-family: ui-monospace, Menlo, monospace;
+      font-size: 12px;
+      color: #666;
+    }
+    .result-status {
+      font-size: 12.5px;
+      color: #334155;
+    }
+    .loading-row {
+      display: grid;
+      grid-template-columns: 120px 140px 150px 150px 120px;
+      gap: 16px;
+      padding: 18px 20px;
+      border-bottom: 1px solid #F1F5F9;
+      align-items: center;
+    }
+    .loading-shimmer {
+      height: 14px;
+      border-radius: 6px;
+      background: linear-gradient(90deg, #F1F5F9 25%, #E2E8F0 37%, #F1F5F9 63%);
+      background-size: 420px 100%;
+      animation: shimmer 1.2s infinite linear;
+    }
+    .empty-state {
+      padding: 52px 20px;
+      text-align: center;
+    }
+    .empty-text {
+      font-size: 14px;
+      font-weight: 600;
+      color: #64748B;
+    }
+    .empty-hint {
+      font-size: 13px;
+      margin-top: 6px;
+      color: #94A3B8;
+    }
+    .empty-hint b {
+      color: #EA580C;
+    }
+    .info-section {
+      background: #fff;
+      border: 1px solid #E2E8F0;
+      border-radius: 16px;
+      padding: 20px 24px;
+    }
+    .info-title {
+      margin: 0 0 14px;
+      font-size: 14px;
+      font-weight: 700;
+      color: #334155;
+    }
+    .info-item {
+      padding: 10px 0;
+      border-bottom: 1px solid #E2E8F0;
+      font-size: 12.5px;
+      color: #334155;
+      line-height: 1.6;
+    }
+    .info-item:last-child {
+      border-bottom: none;
+    }
+    .info-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      margin-right: 8px;
+    }
+    .info-badge.high {
+      background-color: #fee2e2;
+      color: #991b1b;
+    }
+    .info-badge.medium {
+      background-color: #fef3c7;
+      color: #78350f;
+    }
+    .info-badge.low {
+      background-color: #dcfce7;
+      color: #166534;
+    }
+    .hidden { display: none; }
+  </style>
 </head>
 <body>
-  <div class="container">
-    <!-- 헤더 -->
-    <header style="display:flex;align-items:center;gap:16px;margin-bottom:24px;padding-bottom:20px;border-bottom:1px solid #e0e0e0;">
-      <div style="width:40px;height:40px;border-radius:12px;background:#DC2626;display:flex;align-items:center;justify-content:center;color:#fff;font-size:24px;font-weight:800;">!</div>
-      <div>
-        <h1 style="margin:0;font-size:28px;font-weight:800;color:#1f2937;">배치 오류 조회</h1>
-        <p style="margin:4px 0 0 0;font-size:13px;color:#6b7280;">SMS 오류 메시지를 붙여넣고 2-3초 만에 배치 정보 확인</p>
+<div class="container">
+  <header class="header">
+    <div class="header-icon">!</div>
+    <div class="header-content">
+      <div class="header-title">배치 오류 조회</div>
+      <div class="header-desc">SMS 오류 알림을 붙여넣고 2–3초 만에 배치 정보 · 후행 배치 · 영향도까지 확인하세요</div>
+    </div>
+    <div class="header-status">
+      <span class="status-dot"></span>DB 연결됨
+    </div>
+  </header>
+
+  <main class="main">
+    <section class="section">
+      <div class="section-header">
+        <h2 class="section-title">SMS 오류 메시지</h2>
+        <span class="section-hint">전체 붙여넣기</span>
       </div>
-    </header>
+      <textarea id="smsInput" placeholder="[배치자동화]작업에러... SMS 전문을 붙여넣으세요"></textarea>
+      <div id="extractedInfo" class="extracted-info hidden">
+        <div class="extracted-label">추출 완료</div>
+        <div id="extractedList"></div>
+      </div>
+    </section>
 
-    <!-- 데이터 로드 모달 -->
-    <div id="loadModal" class="modal hidden">
-      <div class="modal-content">
-        <h3>배치 정보 데이터 로드</h3>
-        <p id="modalSubtitle">엑셀 파일을 업로드하거나 data.json을 사용합니다.</p>
+    <section class="button-column">
+      <button class="btn-parse" id="parseBtn">정보 추출</button>
+      <div class="divider">↓</div>
+      <button class="btn-search" id="searchBtn" disabled>
+        <span id="searchSpinner" class="spinner hidden"></span>
+        <span id="searchLabel">검색</span>
+      </button>
+      <div class="divider">↓</div>
+      <button class="btn-reset" id="resetBtn">초기화</button>
+    </section>
 
-        <div class="modal-section">
-          <label for="excelFile">엑셀 파일 선택:</label>
-          <input type="file" id="excelFile" accept=".xlsx,.xls,.csv" />
-          <button id="uploadExcelBtn" class="btn btn-primary">업로드</button>
+    <section class="results-section">
+      <div class="results-container">
+        <div class="results-header">
+          <h2 class="section-title">조회 결과</h2>
+          <span class="results-count" id="rowCount">0건</span>
         </div>
-
-        <div class="modal-divider">또는</div>
-
-        <button id="useDefaultBtn" class="btn btn-secondary">기본 data.json 사용</button>
-      </div>
-    </div>
-
-    <!-- 데이터 상태 표시 -->
-    <div id="dataStatus" class="data-status">
-      <span id="dataStatusText"></span>
-      <div class="status-buttons">
-        <button id="exportDataBtn" class="btn-action">📥 내보내기</button>
-        <button id="resetDataBtn" class="btn-action">🔄 재설정</button>
-      </div>
-    </div>
-
-    <!-- 좌측: SMS 입력 & 파싱 -->
-    <div class="left-panel">
-      <h2>SMS 오류 메시지 파싱</h2>
-
-      <div class="section">
-        <label for="smsInput">SMS 오류 메시지</label>
-        <textarea
-          id="smsInput"
-          class="sms-input"
-          placeholder="[배치자동화]작업에러[YYMMDD][HH:MM][GROUP_ID][RUN_ID][job명]..."
-        ></textarea>
-      </div>
-
-      <div class="button-group">
-        <button id="parseBtn" class="btn btn-primary" disabled>[파싱]</button>
-        <button id="resetBtn" class="btn btn-secondary">[초기화]</button>
-      </div>
-
-      <!-- 파싱 결과 -->
-      <div class="section">
-        <label>파싱 결과 (읽기 전용)</label>
-        <div id="parseResult" class="parse-result">
-          <div class="result-field">
-            <span class="label">GROUP ID:</span>
-            <span id="groupIdResult" class="value">-</span>
+        <div class="results-columns">
+          <span>GROUP_ID</span>
+          <span>RUN_ID</span>
+          <span>JOB_ID</span>
+          <span>타겟 테이블</span>
+          <span>상태</span>
+        </div>
+        <div class="results-body">
+          <div id="loadingRow" class="loading-row hidden">
+            <span class="loading-shimmer"></span>
+            <span class="loading-shimmer" style="width: 80%;"></span>
+            <span class="loading-shimmer"></span>
+            <span class="loading-shimmer" style="width: 90%;"></span>
+            <span class="loading-shimmer" style="width: 70%;"></span>
           </div>
-          <div class="result-field">
-            <span class="label">RUN ID:</span>
-            <span id="runIdResult" class="value">-</span>
-          </div>
-          <div class="result-field">
-            <span class="label">SEQ ID:</span>
-            <span id="seqIdResult" class="value">-</span>
-          </div>
-          <div class="result-field">
-            <span class="label">job명:</span>
-            <span id="jobNameResult" class="value">-</span>
+          <div id="resultsList"></div>
+          <div id="emptyState" class="empty-state">
+            <div class="empty-text">아직 조회 결과가 없습니다</div>
+            <div class="empty-hint">SMS 붙여넣기 → <b>정보 추출</b> → <b>검색</b></div>
           </div>
         </div>
       </div>
 
-      <!-- 에러 메시지 -->
-      <div id="parseError" class="error-message" style="display: none;"></div>
-    </div>
-
-    <!-- 우측: 검색 & 결과 -->
-    <div class="right-panel">
-      <h2>배치 정보 검색</h2>
-
-      <div class="section">
-        <button id="searchBtn" class="btn btn-primary" disabled>[검색]</button>
+      <div class="info-section" id="dependenciesSection" style="display: none;">
+        <h3 class="info-title">후행 배치 (다음 실행)</h3>
+        <div id="dependenciesInfo"></div>
       </div>
 
-      <!-- 검색 결과 테이블 -->
-      <div class="section">
-        <label>검색 결과</label>
-        <div class="table-wrapper">
-          <table id="resultTable" class="result-table">
-            <thead>
-              <tr>
-                <th>GROUP_ID</th>
-                <th>RUN_ID</th>
-                <th>SEQ_ID</th>
-                <th>job명</th>
-                <th>JOB_ID</th>
-                <th>타겟테이블</th>
-                <th>타겟테이블명</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr class="empty-row">
-                <td colspan="7">검색 결과가 없습니다.</td>
-              </tr>
-            </tbody>
-          </table>
+      <div class="info-section" id="impactsSection" style="display: none;">
+        <h3 class="info-title">영향도 분석</h3>
+        <div id="impactsInfo"></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- Dexie.js 라이브러리 -->
+<script src="https://cdn.jsdelivr.net/npm/dexie@3/dist/dexie.min.js"></script>
+<!-- SheetJS 라이브러리 (엑셀 파일 읽기) -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18/dist/xlsx.full.min.js"></script>
+<!-- TDD 테스트된 모듈들 -->
+<script src="src/db-init.js"></script>
+<script src="src/sms-parser.js"></script>
+<script src="src/search.js"></script>
+<script src="src/button-state.js"></script>
+<!-- 앱 로직 -->
+<script>
+let parsedData = null;
+let db = null;
+
+async function init() {
+  console.log('[INFO] 앱 초기화 중...');
+
+  // DB 초기화
+  await window.initDB({ clearExisting: false });
+
+  // batches.json 로드 시도
+  try {
+    const response = await fetch('../batches.json');
+    if (response.ok) {
+      const batchData = await response.json();
+      const jobsArray = Object.values(batchData.jobs || {});
+      if (jobsArray.length > 0) {
+        console.log('[INFO] 운영서버 batches.json 로드 중...');
+        await window.loadDataToDB(jobsArray);
+        sessionStorage.setItem('batchDependencies', JSON.stringify(batchData.dependencies || []));
+        sessionStorage.setItem('batchImpacts', JSON.stringify(batchData.impacts || []));
+        updateStatus();
+        return;
+      }
+    }
+  } catch (error) {
+    console.log('[DEBUG] batches.json 로드 실패, data.json 사용', error.message);
+  }
+
+  // data.json 로드 시도
+  try {
+    const response = await fetch('data.json');
+    if (response.ok) {
+      const data = await response.json();
+      await window.loadDataToDB(data);
+      updateStatus();
+    }
+  } catch (error) {
+    console.error('[ERROR] 기본 데이터 로드 실패:', error);
+  }
+}
+
+function updateStatus() {
+  const statusDot = document.querySelector('.status-dot');
+  statusDot.style.background = '#16A34A';
+  document.querySelector('.header-status').style.display = 'flex';
+}
+
+// SMS 입력 감지
+document.getElementById('smsInput').addEventListener('input', (e) => {
+  const hasText = e.target.value.trim() !== '';
+  document.getElementById('parseBtn').disabled = !hasText;
+});
+
+// [정보 추출] 버튼
+document.getElementById('parseBtn').addEventListener('click', () => {
+  const smsText = document.getElementById('smsInput').value.trim();
+  parsedData = window.parseSMS(smsText);
+
+  // 추출 정보 표시
+  const extractedInfo = document.getElementById('extractedInfo');
+  const extractedList = document.getElementById('extractedList');
+
+  if (parsedData && parsedData.groupId) {
+    extractedInfo.classList.remove('hidden');
+    extractedList.innerHTML = `
+      <div class="extracted-item">
+        <span class="extracted-key">GROUP_ID</span>
+        <span class="extracted-value">${parsedData.groupId}</span>
+      </div>
+      <div class="extracted-item">
+        <span class="extracted-key">RUN_ID</span>
+        <span class="extracted-value">${parsedData.runId || '-'}</span>
+      </div>
+      <div class="extracted-item">
+        <span class="extracted-key">SEQ_ID</span>
+        <span class="extracted-value">${parsedData.seqId || '-'}</span>
+      </div>
+      <div class="extracted-item">
+        <span class="extracted-key">job명</span>
+        <span class="extracted-value">${parsedData.jobName || '-'}</span>
+      </div>
+    `;
+    document.getElementById('searchBtn').disabled = false;
+  } else {
+    extractedInfo.classList.add('hidden');
+    document.getElementById('searchBtn').disabled = true;
+  }
+});
+
+// [검색] 버튼
+document.getElementById('searchBtn').addEventListener('click', async () => {
+  if (!parsedData) return;
+
+  const searchSpinner = document.getElementById('searchSpinner');
+  const searchLabel = document.getElementById('searchLabel');
+  const searchBtn = document.getElementById('searchBtn');
+
+  // 로딩 상태
+  searchBtn.disabled = true;
+  searchSpinner.classList.remove('hidden');
+  searchLabel.textContent = '조회 중';
+  document.getElementById('loadingRow').classList.remove('hidden');
+  document.getElementById('resultsList').innerHTML = '';
+  document.getElementById('emptyState').classList.add('hidden');
+
+  // 실제 검색 (시뮬레이션 딜레이)
+  await new Promise(resolve => setTimeout(resolve, 1100));
+
+  try {
+    const results = await window.searchBatches({
+      groupId: parsedData.groupId,
+      runId: parsedData.runId,
+      seqId: parsedData.seqId
+    });
+
+    // 검색 결과 표시
+    const resultsList = document.getElementById('resultsList');
+    const rowCount = document.getElementById('rowCount');
+
+    if (results.error) {
+      document.getElementById('emptyState').classList.remove('hidden');
+      rowCount.textContent = '0건';
+    } else {
+      const rows = Array.isArray(results) ? results : [results];
+      rowCount.textContent = rows.length + '건';
+
+      resultsList.innerHTML = rows.map((row, i) => `
+        <div class="result-row ${i === 0 ? 'first' : ''}">
+          <span class="result-job-id">${row.groupId || '-'}</span>
+          <span class="result-job-name">${row.runId || '-'}</span>
+          <span class="result-table">${row.jobId || '-'}</span>
+          <span class="result-seq">${row.targetTable || '-'}</span>
+          <span class="result-status">${row.targetTableName || '-'}</span>
         </div>
-      </div>
+      `).join('');
 
-      <!-- 에러 메시지 -->
-      <div id="searchError" class="error-message" style="display: none;"></div>
+      // 후행/영향도 정보 표시
+      displayDependencyInfo(rows);
+    }
+  } catch (error) {
+    console.error('[ERROR] 검색 실패:', error);
+    document.getElementById('emptyState').classList.remove('hidden');
+  } finally {
+    // 로딩 상태 해제
+    searchSpinner.classList.add('hidden');
+    searchLabel.textContent = '검색';
+    searchBtn.disabled = false;
+    document.getElementById('loadingRow').classList.add('hidden');
+  }
+});
 
-      <!-- 후행 배치 정보 -->
-      <div id="dependenciesSection" class="section" style="display: none;">
-        <label>후행 배치 (선택된 배치 이후 실행)</label>
-        <div id="dependenciesInfo" class="info-box"></div>
-      </div>
+// [초기화] 버튼
+document.getElementById('resetBtn').addEventListener('click', () => {
+  document.getElementById('smsInput').value = '';
+  parsedData = null;
+  document.getElementById('extractedInfo').classList.add('hidden');
+  document.getElementById('searchBtn').disabled = true;
+  document.getElementById('resultsList').innerHTML = '';
+  document.getElementById('rowCount').textContent = '0건';
+  document.getElementById('parseBtn').disabled = true;
+  document.getElementById('dependenciesSection').style.display = 'none';
+  document.getElementById('impactsSection').style.display = 'none';
+  document.getElementById('emptyState').classList.remove('hidden');
+});
 
-      <!-- 영향도 분석 -->
-      <div id="impactsSection" class="section" style="display: none;">
-        <label>영향도 분석 (선택된 배치 실패 시 영향받는 배치)</label>
-        <div id="impactsInfo" class="info-box"></div>
-      </div>
-    </div>
-  </div>
+// 후행/영향도 정보 표시
+function displayDependencyInfo(results) {
+  const dependencies = JSON.parse(sessionStorage.getItem('batchDependencies') || '[]');
+  const impacts = JSON.parse(sessionStorage.getItem('batchImpacts') || '[]');
 
-  <!-- Dexie.js 라이브러리 -->
-  <script src="https://cdn.jsdelivr.net/npm/dexie@3/dist/dexie.min.js"></script>
-  <!-- SheetJS 라이브러리 (엑셀 파일 읽기) -->
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18/dist/xlsx.full.min.js"></script>
-  <!-- TDD 테스트된 모듈들 -->
-  <script src="src/db-init.js"></script>
-  <script src="src/sms-parser.js"></script>
-  <script src="src/search.js"></script>
-  <script src="src/button-state.js"></script>
-  <!-- 앱 로직 -->
-  <script src="app.js"></script>
+  if (dependencies.length === 0 && impacts.length === 0) {
+    document.getElementById('dependenciesSection').style.display = 'none';
+    document.getElementById('impactsSection').style.display = 'none';
+    return;
+  }
+
+  // 선택된 배치의 JOB_ID
+  const selectedJobIds = results.map(r => r.jobId).filter(Boolean);
+
+  // 후행 배치 찾기
+  const followingBatches = dependencies.filter(dep =>
+    selectedJobIds.includes(dep.source)
+  );
+
+  if (followingBatches.length > 0) {
+    document.getElementById('dependenciesSection').style.display = 'block';
+    document.getElementById('dependenciesInfo').innerHTML = followingBatches
+      .map(dep => `
+        <div class="info-item">
+          <strong>${dep.source}</strong> → <strong>${dep.target}</strong>
+          <div style="color: #64748B; font-size: 11px; margin-top: 4px;">via ${dep.link}</div>
+        </div>
+      `)
+      .join('');
+  } else {
+    document.getElementById('dependenciesSection').style.display = 'none';
+  }
+
+  // 영향도 찾기
+  const affectedJobs = impacts.filter(impact =>
+    selectedJobIds.includes(impact.source)
+  );
+
+  if (affectedJobs.length > 0) {
+    document.getElementById('impactsSection').style.display = 'block';
+    document.getElementById('impactsInfo').innerHTML = affectedJobs
+      .map(impact => `
+        <div class="info-item">
+          <span class="info-badge ${impact.severity}">
+            ${impact.severity === 'high' ? '🔴' : impact.severity === 'medium' ? '🟡' : '🟢'}
+            ${impact.severity.toUpperCase()}
+          </span>
+          <strong>${impact.source}</strong> 실패 시 <strong>${impact.count}개</strong> 배치 영향
+          <div style="color: #64748B; font-size: 11px; margin-top: 4px;">${impact.affected.join(', ')}</div>
+        </div>
+      `)
+      .join('');
+  } else {
+    document.getElementById('impactsSection').style.display = 'none';
+  }
+}
+
+// 앱 시작
+window.addEventListener('load', init);
+</script>
 </body>
 </html>

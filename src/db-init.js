@@ -138,10 +138,34 @@ async function getDBStatus() {
   };
 }
 
-module.exports = {
-  initDB,
-  getBatchesByGroupId,
-  getBatchesByRunId,
-  getBatchesBySeqId,
-  getDBStatus
-};
+// Browser environment
+if (typeof window !== 'undefined') {
+  window.initDB = initDB;
+  window.getBatchesByGroupId = getBatchesByGroupId;
+  window.getBatchesByRunId = getBatchesByRunId;
+  window.getBatchesBySeqId = getBatchesBySeqId;
+  window.getDBStatus = getDBStatus;
+  // Alias for loading data
+  window.loadDataToDB = async (data) => {
+    if (!db) {
+      db = new BatchDB();
+    }
+    if (!isInitialized) {
+      await db.open();
+      isInitialized = true;
+    }
+    await db.batches.clear();
+    await db.batches.bulkAdd(data);
+  };
+}
+
+// Node.js environment
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = {
+    initDB,
+    getBatchesByGroupId,
+    getBatchesByRunId,
+    getBatchesBySeqId,
+    getDBStatus
+  };
+}

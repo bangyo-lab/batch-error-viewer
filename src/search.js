@@ -1,14 +1,21 @@
 // Cascading fallback search for batches
 // Priority: GROUP_ID → RUN_ID → SEQ_ID
 
-// Get db functions from db-init module (Node/Jest)
+// Get db functions (works in both Node and browser)
 let getBatchesByGroupId, getBatchesByRunId, getBatchesBySeqId;
 
 if (typeof module !== 'undefined' && module.exports && typeof require !== 'undefined') {
+  // Node/Jest environment
   const dbInit = require('./db-init');
   getBatchesByGroupId = dbInit.getBatchesByGroupId;
   getBatchesByRunId = dbInit.getBatchesByRunId;
   getBatchesBySeqId = dbInit.getBatchesBySeqId;
+} else if (typeof window !== 'undefined') {
+  // Browser environment - will be set after db-init.js loads
+  // Use lazy binding
+  getBatchesByGroupId = (...args) => window.getBatchesByGroupId(...args);
+  getBatchesByRunId = (...args) => window.getBatchesByRunId(...args);
+  getBatchesBySeqId = (...args) => window.getBatchesBySeqId(...args);
 }
 
 async function searchBatches(criteria) {
