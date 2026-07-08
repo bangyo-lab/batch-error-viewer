@@ -280,6 +280,75 @@ function displaySearchResults(results) {
     `;
     tbody.appendChild(tr);
   });
+
+  // 후행/영향도 정보 표시
+  displayDependencyInfo(results);
+}
+
+// 후행/영향도 정보 표시
+function displayDependencyInfo(results) {
+  const dependenciesSection = document.getElementById('dependenciesSection');
+  const impactsSection = document.getElementById('impactsSection');
+  const dependenciesInfo = document.getElementById('dependenciesInfo');
+  const impactsInfo = document.getElementById('impactsInfo');
+
+  const dependencies = JSON.parse(sessionStorage.getItem('batchDependencies') || '[]');
+  const impacts = JSON.parse(sessionStorage.getItem('batchImpacts') || '[]');
+
+  if (dependencies.length === 0 && impacts.length === 0) {
+    dependenciesSection.style.display = 'none';
+    impactsSection.style.display = 'none';
+    return;
+  }
+
+  // 선택된 배치의 JOB_ID
+  const selectedJobIds = results.map(r => r.jobId);
+
+  // 후행 배치 찾기 (선택된 배치가 source인 의존성)
+  const followingBatches = dependencies.filter(dep =>
+    selectedJobIds.includes(dep.source)
+  );
+
+  if (followingBatches.length > 0) {
+    dependenciesSection.style.display = 'block';
+    dependenciesInfo.innerHTML = followingBatches
+      .map(dep => `
+        <div class="dependency-item">
+          <strong>${dep.source}</strong>
+          <span class="dependency-arrow">→</span>
+          <strong>${dep.target}</strong>
+          <span style="color: #9ca3af;">via ${dep.link}</span>
+        </div>
+      `)
+      .join('');
+  } else {
+    dependenciesSection.style.display = 'none';
+  }
+
+  // 영향도 찾기 (선택된 배치가 source인 영향도)
+  const affectedJobs = impacts.filter(impact =>
+    selectedJobIds.includes(impact.source)
+  );
+
+  if (affectedJobs.length > 0) {
+    impactsSection.style.display = 'block';
+    impactsInfo.innerHTML = affectedJobs
+      .map(impact => `
+        <div class="dependency-item">
+          <span class="impact-badge ${impact.severity}">
+            ${impact.severity === 'high' ? '🔴' : impact.severity === 'medium' ? '🟡' : '🟢'}
+            ${impact.severity.toUpperCase()}
+          </span>
+          <strong>${impact.source}</strong> 실패 시
+          <strong>${impact.count}개</strong> 배치 영향:
+          <br>
+          <span style="color: #6b7280;">${impact.affected.join(', ')}</span>
+        </div>
+      `)
+      .join('');
+  } else {
+    impactsSection.style.display = 'none';
+  }
 }
 
 // 검색 결과 초기화
@@ -368,5 +437,29 @@ resetDataBtn.addEventListener('click', () => {
 // 앱 초기화
 window.addEventListener('load', async () => {
   await initializeDB();
+
+  // batches.json이 있으면 우선적으로 로드 (운영서버 데이터)
+  try {
+    const response = await fetch('batches.json');
+    if (response.ok) {
+      const batchData = await response.json();
+      // batches.json의 jobs 배열 추출
+      const jobsArray = Object.values(batchData.jobs || {});
+      if (jobsArray.length > 0) {
+        console.log('[INFO] 운영서버 batches.json 로드 중...');
+        await loadDataToDB(jobsArray);
+
+        // 메타 정보 저장 (후행/영향도)
+        sessionStorage.setItem('batchDependencies', JSON.stringify(batchData.dependencies || []));
+        sessionStorage.setItem('batchImpacts', JSON.stringify(batchData.impacts || []));
+
+        return;
+      }
+    }
+  } catch (error) {
+    console.log('[DEBUG] batches.json 로드 실패, data.json 사용', error.message);
+  }
+
+  // batches.json이 없으면 기존 data.json 로드
   await checkDataExists();
 });

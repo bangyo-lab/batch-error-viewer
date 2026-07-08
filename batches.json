@@ -1,0 +1,143 @@
+{
+  "header": {
+    "CharacterSet": "CP949",
+    "ExportingTool": "IBM InfoSphere DataStage Export",
+    "ToolVersion": "8",
+    "ServerName": "NHNABSLTTL01",
+    "ToolInstanceID": "NH_EWBS",
+    "MDISVersion": "1.0",
+    "Date": "2026-07-02",
+    "Time": "15.34.34",
+    "ServerVersion": "11.7"
+  },
+  "jobs": {
+    "yn_job1": {
+      "name": "yn_job1",
+      "inputs": [
+        "I_bod_fempe03"
+      ],
+      "outputs": [
+        "O_TB_"
+      ]
+    },
+    "yn_job2": {
+      "name": "yn_job2",
+      "inputs": [
+        "I_bod_fempe03"
+      ],
+      "outputs": [
+        "O_TB_"
+      ]
+    },
+    "yn_job3": {
+      "name": "yn_job3",
+      "inputs": [
+        "I_bod_fempe03"
+      ],
+      "outputs": [
+        "O_TB_"
+      ]
+    },
+    "yn_job4": {
+      "name": "yn_job4",
+      "inputs": [
+        "O_TB_"
+      ],
+      "outputs": [
+        "I_bod_fempe03"
+      ]
+    },
+    "YN_PARSER_TEST": {
+      "name": "YN_PARSER_TEST",
+      "inputs": [],
+      "outputs": []
+    }
+  },
+  "dependencies": [
+    {
+      "source": "yn_job1",
+      "target": "yn_job4",
+      "type": "sequential",
+      "link": "O_TB_"
+    },
+    {
+      "source": "yn_job2",
+      "target": "yn_job4",
+      "type": "sequential",
+      "link": "O_TB_"
+    },
+    {
+      "source": "yn_job3",
+      "target": "yn_job4",
+      "type": "sequential",
+      "link": "O_TB_"
+    },
+    {
+      "source": "yn_job4",
+      "target": "yn_job1",
+      "type": "sequential",
+      "link": "I_bod_fempe03"
+    },
+    {
+      "source": "yn_job4",
+      "target": "yn_job2",
+      "type": "sequential",
+      "link": "I_bod_fempe03"
+    },
+    {
+      "source": "yn_job4",
+      "target": "yn_job3",
+      "type": "sequential",
+      "link": "I_bod_fempe03"
+    }
+  ],
+  "impacts": [
+    {
+      "source": "yn_job1",
+      "affected": [
+        "yn_job2",
+        "yn_job3",
+        "yn_job4"
+      ],
+      "count": 3,
+      "severity": "high"
+    },
+    {
+      "source": "yn_job2",
+      "affected": [
+        "yn_job1",
+        "yn_job3",
+        "yn_job4"
+      ],
+      "count": 3,
+      "severity": "high"
+    },
+    {
+      "source": "yn_job3",
+      "affected": [
+        "yn_job1",
+        "yn_job2",
+        "yn_job4"
+      ],
+      "count": 3,
+      "severity": "high"
+    },
+    {
+      "source": "yn_job4",
+      "affected": [
+        "yn_job1",
+        "yn_job2",
+        "yn_job3"
+      ],
+      "count": 3,
+      "severity": "high"
+    }
+  ],
+  "lastUpdated": "2026-07-08T15:09:36.882220Z",
+  "version": "1.0",
+  "summary": {
+    "totalJobs": 5,
+    "totalDependencies": 6,
+    "jobsWithImpact": 4
+  }
+}
