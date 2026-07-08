@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>배치 오류 조회</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; }
+    body {
+      background: #F8FAFC;
+      font-family: 'Malgun Gothic', 'Segoe UI', system-ui, sans-serif;
+      color: #0F172A;
+      -webkit-font-smoothing: antialiased;
+    }
+    a {
+      color: #2563EB;
+      text-decoration: none;
+    }
+    a:hover {
+      color: #1D4ED8;
+      text-decoration: underline;
+    }
+    button:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+    textarea::placeholder {
+      color: #94A3B8;
+    }
+    textarea:focus {
+      outline: none;
+      border-color: #EA580C;
+      box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.12);
+    }
+    @keyframes rowPop {
+      0% { opacity: 0; transform: translateY(-10px); }
+      100% { opacity: 1; transform: none; }
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    @keyframes shimmer {
+      0% { background-position: -420px 0; }
+      100% { background-position: 420px 0; }
+    }
+    .container {
+      min-height: 100vh;
+      padding: 32px 40px 56px;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 28px;
+      max-width: 1440px;
+    }
+    .header-icon {
+      width: 46px;
+      height: 46px;
+      border-radius: 14px;
+      background: #EA580C;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 26px;
+      font-weight: 800;
+      line-height: 1;
+    }
+    .header-content {
+      flex: 1;
+    }
+    .header-title {
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+    .header-desc {
+      font-size: 13px;
+      color: #64748B;
+      margin-top: 3px;
+    }
+    .header-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      border: 1px solid #E2E8F0;
+      border-radius: 999px;
+      background: #fff;
+      font-size: 12px;
+      color: #64748B;
+      font-weight: 600;
+    }
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #16A34A;
+      display: inline-block;
+    }
+    .main {
+      display: grid;
+      grid-template-columns: 380px 100px minmax(560px, 1fr);
+      gap: 24px;
+      align-items: start;
+      max-width: 1440px;
+    }
+    .section {
+      background: #fff;
+      border: 1px solid #E2E8F0;
+      border-radius: 16px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .section-title {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 700;
+    }
+    .section-hint {
+      font-size: 12px;
+      color: #94A3B8;
+    }
+    textarea {
+      height: 300px;
+      resize: vertical;
+      border: 1px solid #E2E8F0;
+      border-radius: 12px;
+      padding: 16px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 12.5px;
+      line-height: 1.6;
+      background: #F8FAFC;
+      color: #0F172A;
+      width: 100%;
+    }
+    .extracted-info {
+      border: 1px dashed #FED7AA;
+      background: #FFF7ED;
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 11px;
+    }
+    .extracted-label {
+      font-size: 11px;
+      font-weight: 800;
+      color: #EA580C;
+      letter-spacing: 0.06em;
+    }
+    .extracted-item {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 13px;
+    }
+    .extracted-key {
+      color: #64748B;
+      flex: none;
+    }
+    .extracted-value {
+      font-weight: 600;
+      font-family: ui-monospace, Menlo, monospace;
+      text-align: right;
+      word-break: break-all;
+    }
+    .button-column {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      align-items: center;
+      padding-top: 60px;
+    }
+    button {
+      font-family: inherit;
+      cursor: pointer;
+      border-radius: 12px;
+      font-weight: 700;
+      transition: background-color 0.2s;
+    }
+    .btn-parse {
+      width: 100%;
+      padding: 14px 6px;
+      border: 1.5px solid #EA580C;
+      background: #fff;
+      color: #EA580C;
+      font-size: 13px;
+    }
+    .btn-parse:hover:not(:disabled) {
+      background: #FFF7ED;
+    }
+    .btn-search {
+      width: 100%;
+      padding: 20px 6px;
+      border: none;
+      background: #EA580C;
+      color: #fff;
+      border-radius: 14px;
+      font-size: 15px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 6px 16px rgba(234, 88, 12, 0.28);
+    }
+    .btn-search:hover:not(:disabled) {
+      background: #C2410C;
+    }
+    .btn-reset {
+      width: 100%;
+      padding: 12px 6px;
+      border: 1px solid #E2E8F0;
+      background: #fff;
+      color: #64748B;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .btn-reset:hover {
+      background: #F8FAFC;
+    }
+    .divider {
+      color: #CBD5E1;
+      font-size: 15px;
+      font-weight: 800;
+      line-height: 1;
+    }
+    .spinner {
+      width: 14px;
+      height: 14px;
+      border: 2px solid rgba(255, 255, 255, 0.4);
+      border-top-color: #fff;
+      border-radius: 50%;
+      display: inline-block;
+      animation: spin 0.6s linear infinite;
+    }
+    .results-section {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      min-width: 0;
+    }
+    .results-container {
+      background: #fff;
+      border: 1px solid #E2E8F0;
+      border-radius: 16px;
+      overflow: hidden;
+    }
+    .results-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 20px;
+    }
+    .results-count {
+      font-size: 12px;
+      font-weight: 700;
+      color: #64748B;
+      background: #F1F5F9;
+      padding: 4px 12px;
+      border-radius: 999px;
+    }
+    .results-columns {
+      display: grid;
+      grid-template-columns: 128px 1.5fr 200px 1.6fr 150px;
+      gap: 16px;
+      padding: 13px 20px;
+      background: #F8FAFC;
+      border-top: 1px solid #E2E8F0;
+      border-bottom: 1px solid #E2E8F0;
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #64748B;
+      letter-spacing: 0.03em;
+    }
+    .results-body {
+      min-height: 60px;
+    }
+    .result-row {
+      display: grid;
+      grid-template-columns: 128px 1.5fr 200px 1.6fr 150px;
+      gap: 16px;
+      padding: 16px 20px;
+      border-bottom: 1px solid #F1F5F9;
+      align-items: center;
+      border-left: 3px solid transparent;
+      background: #fff;
+    }
+    .result-row.first {
+      border-left-color: #EA580C;
+      background: #FFF7ED;
+      animation: rowPop 0.4s ease-out;
+    }
+    .result-job-id {
+      font-family: ui-monospace, Menlo, monospace;
+      font-weight: 700;
+      color: #EA580C;
+      font-size: 13px;
+    }
+    .result-job-name {
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    .result-table {
+      font-family: ui-monospace, Menlo, monospace;
+      font-size: 12.5px;
+      color: #2563EB;
+      word-break: break-all;
+    }
+    .result-error {
+      font-size: 12.5px;
+      color: #334155;
+      line-height: 1.5;
+    }
+    .result-time {
+      font-size: 12.5px;
+      color: #64748B;
+      font-variant-numeric: tabular-nums;
+    }
+    .loading-row {
+      display: grid;
+      grid-template-columns: 128px 1.5fr 200px 1.6fr 150px;
+      gap: 16px;
+      padding: 18px 20px;
+      border-bottom: 1px solid #F1F5F9;
+      align-items: center;
+    }
+    .loading-shimmer {
+      height: 14px;
+      border-radius: 6px;
+      background: linear-gradient(90deg, #F1F5F9 25%, #E2E8F0 37%, #F1F5F9 63%);
+      background-size: 420px 100%;
+      animation: shimmer 1.2s infinite linear;
+    }
+    .empty-state {
+      padding: 52px 20px;
+      text-align: center;
+    }
+    .empty-text {
+      font-size: 14px;
+      font-weight: 600;
+      color: #64748B;
+    }
+    .empty-hint {
+      font-size: 13px;
+      margin-top: 6px;
+      color: #94A3B8;
+    }
+    .empty-hint b {
+      color: #EA580C;
+    }
+    .history-section {
+      background: #fff;
+      border: 1px solid #E2E8F0;
+      border-radius: 16px;
+      padding: 20px 24px;
+    }
+    .history-title {
+      margin: 0 0 14px;
+      font-size: 14px;
+      font-weight: 700;
+      color: #334155;
+    }
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .history-item {
+      display: grid;
+      grid-template-columns: 130px 1fr;
+      gap: 14px;
+      align-items: center;
+      text-align: left;
+      padding: 10px 14px;
+      border: 1px solid #E2E8F0;
+      background: #fff;
+      border-radius: 10px;
+      cursor: pointer;
+      font-family: inherit;
+      width: 100%;
+      font-size: 12.5px;
+      transition: border-color 0.2s, background-color 0.2s;
+    }
+    .history-item:hover {
+      background: #F8FAFC;
+      border-color: #FED7AA;
+    }
+    .history-job-id {
+      font-family: ui-monospace, Menlo, monospace;
+      font-weight: 700;
+      color: #EA580C;
+      font-size: 12.5px;
+    }
+    .history-job-name {
+      font-size: 12.5px;
+      color: #334155;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .history-empty {
+      font-size: 13px;
+      color: #94A3B8;
+      padding: 8px 0;
+    }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <header class="header">
+    <div class="header-icon">!</div>
+    <div class="header-content">
+      <div class="header-title">배치 오류 조회</div>
+      <div class="header-desc">SMS 오류 알림을 붙여넣고 2–3초 만에 JOB ID · 후행 배치 영향도까지 확인하세요</div>
+    </div>
+    <div class="header-status">
+      <span class="status-dot"></span>목업 DB 연결됨
+    </div>
+  </header>
+
+  <main class="main">
+    <section class="section">
+      <div class="section-header">
+        <h2 class="section-title">SMS 오류 메시지</h2>
+        <span class="section-hint">전체 붙여넣기</span>
+      </div>
+      <textarea id="smsInput" placeholder="[중앙회 시스템 알림] ... 오류 SMS 전문을 붙여넣으세요"></textarea>
+      <div id="extractedInfo" class="extracted-info hidden">
+        <div class="extracted-label">추출 완료</div>
+        <div id="extractedList"></div>
+      </div>
+    </section>
+
+    <section class="button-column">
+      <button class="btn-parse" id="parseBtn">정보 추출</button>
+      <div class="divider">↓</div>
+      <button class="btn-search" id="searchBtn" disabled>
+        <span id="searchSpinner" class="spinner hidden"></span>
+        <span id="searchLabel">검색</span>
+      </button>
+      <div class="divider">↓</div>
+      <button class="btn-reset" id="resetBtn">초기화</button>
+    </section>
+
+    <section class="results-section">
+      <div class="results-container">
+        <div class="results-header">
+          <h2 class="section-title">조회 결과</h2>
+          <span class="results-count" id="rowCount">0건</span>
+        </div>
+        <div class="results-columns">
+          <span>JOB_ID</span>
+          <span>배치명</span>
+          <span>타겟 테이블명</span>
+          <span>오류 메시지</span>
+          <span>발생 시각</span>
+        </div>
+        <div class="results-body">
+          <div id="loadingRow" class="loading-row hidden">
+            <span class="loading-shimmer"></span>
+            <span class="loading-shimmer" style="width: 80%;"></span>
+            <span class="loading-shimmer"></span>
+            <span class="loading-shimmer" style="width: 90%;"></span>
+            <span class="loading-shimmer" style="width: 70%;"></span>
+          </div>
+          <div id="resultsList"></div>
+          <div id="emptyState" class="empty-state">
+            <div class="empty-text">아직 조회 결과가 없습니다</div>
+            <div class="empty-hint">SMS 붙여넣기 → <b>파싱</b> → <b>검색</b></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="history-section" id="historySection">
+        <h3 class="history-title">최근 조회 이력</h3>
+        <div id="historyContent">
+          <div class="history-empty">조회 이력이 없습니다</div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+const COLS = '128px 1.5fr 200px 1.6fr 150px';
+const EXAMPLE = `[중앙회 시스템 알림]
+[배치자동화]작업에러[260616][01:10][SDF770][SDFPD771][FW1차_오늘농사_수출입실적날씨월통계(16일)][Tue Jun 16 01:10:02 2026
+Type\t: FATAL
+User\t: autojob
+Message\t:
+\tseq_sfpdmg502..JobControl (fatal error from @Coordinator): Sequence job (restartable) will abort due to previous unrecoverable errors
+Event Id: 696
+Time\t: Tue Jun 16 01:10:02 2026
+Type\t: WARNING
+User\t: autojob
+Message\t:
+\tAttempting to Cleanup after ABORT raised in job seq_sfpdmg502..JobControl
+Status code = 0
+\tJob seq_sfpdmg502 aborted.
++ exit 9
+]
+[본 메시지는 수신 동의 여부와 관계없이 발송되는 알림 메시지입니다]`;
+
+const JOB_DB = {
+  SDFPD771: { targetTable: 'TB_TRD_IMEXP_WTHR_MON_STAT', errorMsg: 'Sequence job(restartable) abort — 이전 복구불가 오류 (exit 9)' },
+  SDFPD440: { targetTable: 'TB_AGRI_DAILY_PRICE_STG', errorMsg: '소스 파일 미도착으로 로드 스킵 (timeout)' },
+  SDFCM102: { targetTable: 'TB_CUST_MASTER_DELTA', errorMsg: 'PK 중복 — 머지 단계 롤백' },
+};
+
+const HIST_KEY = 'batchErr.history.v1';
+
+class BatchErrorApp {
+  constructor() {
+    this.state = {
+      sms: EXAMPLE,
+      parsed: null,
+      loading: false,
+      rows: [],
+      history: [],
+    };
+    this.searchDelayMs = 1100;
+    this.init();
+  }
+
+  init() {
+    this.loadHistory();
+    this.setupEventListeners();
+    this.render();
+  }
+
+  setupEventListeners() {
+    document.getElementById('smsInput').addEventListener('input', (e) => {
+      this.state.sms = e.target.value;
+      this.state.parsed = null;
+      this.render();
+    });
+
+    document.getElementById('parseBtn').addEventListener('click', () => this.onParse());
+    document.getElementById('searchBtn').addEventListener('click', () => this.onSearch());
+    document.getElementById('resetBtn').addEventListener('click', () => this.onReset());
+  }
+
+  loadHistory() {
+    try {
+      const raw = localStorage.getItem(HIST_KEY);
+      if (raw) this.state.history = JSON.parse(raw);
+    } catch (e) {}
+  }
+
+  parseSms(text) {
+    if (!text || !text.trim()) return null;
+    const br = [...text.matchAll(/\[([^\[\]]*)\]/g)].map(m => m[1].trim()).filter(Boolean);
+    let date = '', time = '', name = '';
+    const codes = [];
+    br.forEach(t => {
+      if (/^\d{6}$/.test(t)) date = date || t;
+      else if (/^\d{1,2}:\d{2}$/.test(t)) time = time || t;
+      else if (/^[A-Z]{2,}\d+$/.test(t)) codes.push(t);
+      else if (/[가-힣_]/.test(t) && t.length > 3 && !/^(Mon|Tue|Wed|Thu|Fri|Sat|Sun)/.test(t)) name = name || t;
+    });
+    const jobId = codes.length ? codes[codes.length - 1] : '';
+    const systemCode = codes.length > 1 ? codes[0] : '';
+    const seqM = text.match(/seq_[a-zA-Z0-9_]+/);
+    const exitM = text.match(/exit\s+(\d+)/);
+    let dt = '';
+    if (date) {
+      const y = '20' + date.slice(0, 2), mo = date.slice(2, 4), d = date.slice(4, 6);
+      dt = `${y}-${mo}-${d}` + (time ? ` ${time.length === 4 ? '0' + time : time}` : '');
+    }
+    return { jobId, jobName: name, systemCode, seqName: seqM ? seqM[0] : '', exitCode: exitM ? exitM[1] : '', dateTime: dt };
+  }
+
+  lookup(jobId, parsed) {
+    const rec = JOB_DB[jobId];
+    if (rec) return rec;
+    return {
+      targetTable: 'TB_' + (jobId || 'UNKNOWN') + '_STG',
+      errorMsg: parsed.seqName
+        ? `${parsed.seqName} aborted` + (parsed.exitCode ? ` (exit ${parsed.exitCode})` : '')
+        : '오류 메시지 확인 필요',
+    };
+  }
+
+  onParse() {
+    this.state.parsed = this.parseSms(this.state.sms);
+    this.render();
+  }
+
+  onReset() {
+    this.state.sms = '';
+    this.state.parsed = null;
+    this.state.rows = [];
+    document.getElementById('smsInput').value = '';
+    this.render();
+  }
+
+  onSearch() {
+    const parsed = this.state.parsed;
+    if (!parsed || this.state.loading) return;
+    this.state.loading = true;
+    this.render();
+    setTimeout(() => {
+      const rec = this.lookup(parsed.jobId, parsed);
+      const row = {
+        id: Date.now(),
+        jobId: parsed.jobId || '—',
+        jobName: parsed.jobName || '—',
+        targetTable: rec.targetTable,
+        errorMsg: rec.errorMsg,
+        timeStr: parsed.dateTime || '—',
+      };
+      const hist = { id: row.id, jobId: row.jobId, jobName: row.jobName, timeStr: row.timeStr, sms: this.state.sms };
+      this.state.rows.unshift(row);
+      this.state.history = [hist, ...this.state.history.filter(h => !(h.jobId === hist.jobId && h.timeStr === hist.timeStr))].slice(0, 6);
+      try { localStorage.setItem(HIST_KEY, JSON.stringify(this.state.history)); } catch (e) {}
+      this.state.loading = false;
+      this.render();
+    }, this.searchDelayMs);
+  }
+
+  loadHistoryItem(h) {
+    this.state.sms = h.sms;
+    this.state.parsed = this.parseSms(h.sms);
+    document.getElementById('smsInput').value = h.sms;
+    this.render();
+  }
+
+  render() {
+    this.renderSmsInput();
+    this.renderExtractedInfo();
+    this.renderButtons();
+    this.renderResults();
+    this.renderHistory();
+  }
+
+  renderSmsInput() {
+    document.getElementById('smsInput').value = this.state.sms;
+  }
+
+  renderExtractedInfo() {
+    const container = document.getElementById('extractedInfo');
+    const listDiv = document.getElementById('extractedList');
+    if (!this.state.parsed) {
+      container.classList.add('hidden');
+      return;
+    }
+    container.classList.remove('hidden');
+    const parsed = this.state.parsed;
+    const items = [
+      { label: 'JOB_ID', value: parsed.jobId || '—' },
+      { label: '배치명', value: parsed.jobName || '—' },
+      { label: '발생 시각', value: parsed.dateTime || '—' },
+    ];
+    if (parsed.seqName) items.push({ label: 'SEQ', value: parsed.seqName });
+    listDiv.innerHTML = items.map(p => `
+      <div class="extracted-item">
+        <span class="extracted-key">${p.label}</span>
+        <span class="extracted-value">${p.value}</span>
+      </div>
+    `).join('');
+  }
+
+  renderButtons() {
+    const parseBtn = document.getElementById('parseBtn');
+    const searchBtn = document.getElementById('searchBtn');
+    const searchSpinner = document.getElementById('searchSpinner');
+    const searchLabel = document.getElementById('searchLabel');
+
+    parseBtn.disabled = !this.state.sms.trim();
+    searchBtn.disabled = !this.state.parsed || this.state.loading;
+
+    if (this.state.loading) {
+      searchSpinner.classList.remove('hidden');
+      searchLabel.textContent = '조회 중';
+    } else {
+      searchSpinner.classList.add('hidden');
+      searchLabel.textContent = '검색';
+    }
+  }
+
+  renderResults() {
+    const resultsList = document.getElementById('resultsList');
+    const loadingRow = document.getElementById('loadingRow');
+    const emptyState = document.getElementById('emptyState');
+    const rowCount = document.getElementById('rowCount');
+
+    rowCount.textContent = this.state.rows.length + '건';
+
+    if (this.state.loading) {
+      loadingRow.classList.remove('hidden');
+      resultsList.innerHTML = '';
+      emptyState.classList.add('hidden');
+      return;
+    }
+
+    loadingRow.classList.add('hidden');
+
+    if (this.state.rows.length === 0) {
+      resultsList.innerHTML = '';
+      emptyState.classList.remove('hidden');
+      return;
+    }
+
+    emptyState.classList.add('hidden');
+    resultsList.innerHTML = this.state.rows.map((row, i) => `
+      <div class="result-row ${i === 0 ? 'first' : ''}">
+        <span class="result-job-id">${row.jobId}</span>
+        <span class="result-job-name">${row.jobName}</span>
+        <span class="result-table">${row.targetTable}</span>
+        <span class="result-error">${row.errorMsg}</span>
+        <span class="result-time">${row.timeStr}</span>
+      </div>
+    `).join('');
+  }
+
+  renderHistory() {
+    const historyContent = document.getElementById('historyContent');
+    if (this.state.history.length === 0) {
+      historyContent.innerHTML = '<div class="history-empty">조회 이력이 없습니다</div>';
+      return;
+    }
+    historyContent.innerHTML = `
+      <div class="history-list">
+        ${this.state.history.map(h => `
+          <button class="history-item" onclick="app.loadHistoryItem(${JSON.stringify(h).replace(/"/g, '&quot;')})">
+            <span class="history-job-id">${h.jobId}</span>
+            <span class="history-job-name">${h.jobName}</span>
+          </button>
+        `).join('')}
+      </div>
+    `;
+  }
+}
+
+const app = new BatchErrorApp();
+document.getElementById('smsInput').value = EXAMPLE;
+</script>
+</body>
+</html>
