@@ -8,15 +8,6 @@
 </head>
 <body>
   <div class="container">
-    <!-- 헤더 -->
-    <header style="display:flex;align-items:center;gap:16px;margin-bottom:24px;padding-bottom:20px;border-bottom:1px solid #e0e0e0;">
-      <div style="width:40px;height:40px;border-radius:12px;background:#DC2626;display:flex;align-items:center;justify-content:center;color:#fff;font-size:24px;font-weight:800;">!</div>
-      <div>
-        <h1 style="margin:0;font-size:28px;font-weight:800;color:#1f2937;">배치 오류 조회</h1>
-        <p style="margin:4px 0 0 0;font-size:13px;color:#6b7280;">SMS 오류 메시지를 붙여넣고 2-3초 만에 배치 정보 확인</p>
-      </div>
-    </header>
-
     <!-- 데이터 로드 모달 -->
     <div id="loadModal" class="modal hidden">
       <div class="modal-content">
