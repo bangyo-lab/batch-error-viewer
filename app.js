@@ -170,73 +170,44 @@ smsInput.addEventListener('input', () => {
 });
 
 // [파싱] 버튼
-parseBtn.addEventListener('click', parseSMS);
+parseBtn.addEventListener('click', handleParseClick);
 
-// [초기화] 버튼
+// [초기화] 버튼 - SMS 입력만 지우고 파싱/검색 결과는 유지 (스펙 준수)
 resetBtn.addEventListener('click', () => {
   smsInput.value = '';
   smsInput.focus();
   parseBtn.disabled = true;
-  searchBtn.disabled = true;
-  clearParseResult();
-  clearSearchError();
+  // 스펙: 파싱 결과와 검색 결과는 유지되어야 함
+  // searchBtn은 파싱이 없어지면 자동으로 비활성화되어야 하므로 유지
 });
 
 // [검색] 버튼
-searchBtn.addEventListener('click', searchBatch);
+searchBtn.addEventListener('click', handleSearchClick);
 
-// SMS 파싱
-function parseSMS() {
+// SMS 파싱 - 모듈 함수 활용
+function handleParseClick() {
   const smsText = smsInput.value.trim();
   clearParseError();
 
-  try {
-    // 형식: [배치자동화]작업에러[YYMMDD][HH:MM][GROUP_ID][RUN_ID][job명]...
+  // window.parseSMS는 src/sms-parser.js에서 제공됨
+  const result = window.parseSMS(smsText);
 
-    // 1. GROUP_ID, RUN_ID 순서대로 추출
-    // [GROUP_ID] 패턴: [대문자숫자]
-    // [RUN_ID] 패턴: [대문자숫자]
-    const groupRunMatch = smsText.match(/\[([A-Z]+\d+)\]\[([A-Z]+\d+)\]/);
-    if (!groupRunMatch) {
-      throw new Error('GROUP_ID를 찾을 수 없습니다. SMS 메시지 형식을 다시 확인해주세요.');
-    }
-
-    const groupId = groupRunMatch[1];
-    const runId = groupRunMatch[2];
-
-    // 2. RUN_ID 이후 job명 찾기
-    // RUN_ID 다음 대괄호 안의 첫 번째 텍스트가 job명
-    const afterRunId = smsText.substring(smsText.indexOf(runId) + runId.length);
-    const jobNameMatch = afterRunId.match(/\[([^\[\]]+)\]/);
-
-    if (!jobNameMatch) {
-      throw new Error('job명을 찾을 수 없습니다. SMS 메시지 형식을 다시 확인해주세요.');
-    }
-
-    const jobName = jobNameMatch[1];
-
-    // 3. SEQ_ID 추출 (seq_로 시작하는 문자열)
-    const seqIdMatch = smsText.match(/seq_[a-zA-Z0-9_]+/);
-    const seqId = seqIdMatch ? seqIdMatch[0] : null;
-
-    // 파싱 성공
-    parsedData = {
-      groupId,
-      runId,
-      seqId,
-      jobName
-    };
-
-    console.log('✅ SMS 파싱 성공:', parsedData);
-    displayParseResult(parsedData);
-    searchBtn.disabled = false;
-
-  } catch (error) {
-    console.error('❌ SMS 파싱 실패:', error.message);
-    showError('parseError', error.message);
+  if (result.error) {
+    console.error('❌ SMS 파싱 실패:', result.error);
+    showError('parseError', result.error);
     parsedData = null;
     searchBtn.disabled = true;
     clearParseResult();
+  } else {
+    parsedData = {
+      groupId: result.groupId,
+      runId: result.runId,
+      seqId: result.seqId,
+      jobName: result.jobName
+    };
+    console.log('✅ SMS 파싱 성공:', parsedData);
+    displayParseResult(parsedData);
+    searchBtn.disabled = false;
   }
 }
 
@@ -256,8 +227,8 @@ function clearParseResult() {
   document.getElementById('jobNameResult').textContent = '-';
 }
 
-// 배치 검색 (AND 조건)
-async function searchBatch() {
+// 배치 검색 - 모듈 함수 활용 (순차 폴백)
+async function handleSearchClick() {
   if (!parsedData) return;
 
   clearSearchError();
@@ -270,29 +241,16 @@ async function searchBatch() {
       seqId: parsedData.seqId
     });
 
-    // GROUP_ID + RUN_ID로 먼저 검색
-    let results = await db.batches
-      .where('groupId')
-      .equals(parsedData.groupId)
-      .and(row => row.runId === parsedData.runId)
-      .toArray();
+    // window.searchBatches는 src/search.js에서 제공됨 (순차 폴백 검색)
+    const results = await window.searchBatches({
+      groupId: parsedData.groupId,
+      runId: parsedData.runId,
+      seqId: parsedData.seqId
+    });
 
-    console.log(`GROUP_ID + RUN_ID 검색 결과: ${results.length}개`);
-
-    // SEQ_ID가 있으면 추가 필터링
-    if (parsedData.seqId) {
-      results = results.filter(row => row.seqId === parsedData.seqId);
-      console.log(`GROUP_ID + RUN_ID + SEQ_ID 필터링 결과: ${results.length}개`);
-    }
-
-    // 결과 표시
-    if (results.length === 0) {
-      let errorMsg = `GROUP_ID ${parsedData.groupId}, RUN_ID ${parsedData.runId}`;
-      if (parsedData.seqId) {
-        errorMsg += `, SEQ_ID ${parsedData.seqId}`;
-      }
-      errorMsg += '과 일치하는 배치가 없습니다. SMS 정보를 다시 확인해주세요.';
-      showError('searchError', errorMsg);
+    if (results.error) {
+      console.error('❌ 검색 결과 없음:', results.error);
+      showError('searchError', results.error);
     } else {
       console.log(`✅ 검색 완료: ${results.length}개 행`);
       displaySearchResults(results);
